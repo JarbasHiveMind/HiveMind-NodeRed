@@ -56,12 +56,12 @@ class NodeRedMind(HiveMind):
             if msg_type.startswith("node_red."):
                 data["context"]["source"] = client.peer
                 data["context"]["platform"] = platform
-                data["context"]["destination"] = None  # broadcast
+                #data["context"]["destination"] = None  # broadcast
                 if msg_type == 'node_red.query':
                     msg_type = "recognizer_loop:utterance"
                     data["context"]["destination"] = "skills"
                     self.mycroft_send(msg_type, data["data"], data["context"])
-                elif msg_type == 'node_red.answer':
+                elif msg_type in ['node_red.answer', 'node_red.speak']:
                     msg_type = "speak"
                     self.mycroft_send(msg_type, data["data"], data["context"])
                     self.mycroft_send("node_red.success", data["data"],
@@ -74,6 +74,9 @@ class NodeRedMind(HiveMind):
                     self.mycroft_send(msg_type, data["data"], data["context"])
                 elif msg_type == 'node_red.pong':
                     self.mycroft_send(msg_type, data["data"], data["context"])
+                elif msg_type == 'node_red.listen':
+                    self.mycroft_send("mycroft.mic.listen", data["data"],
+                                      data["context"])
             else:
                 super().on_message(client, payload, isBinary)
 
@@ -131,11 +134,10 @@ class NodeRedMind(HiveMind):
 
         # if msg_type namespace is node_red
         # if message is for a node red connection, forward
-        if peer and peer in self.clients:
+        if message.msg_type.startswith("node_red."):
             self.nodered_send(message)
-        elif message.msg_type.startswith("node_red."):
+        elif peer and peer in self.clients:
             self.nodered_send(message)
-
         return
 
 
