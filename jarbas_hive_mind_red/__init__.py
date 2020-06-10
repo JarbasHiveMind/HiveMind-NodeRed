@@ -3,6 +3,9 @@ from jarbas_hive_mind import HiveMindListener
 from jarbas_utils.log import LOG
 from jarbas_utils.messagebus import Message
 import json
+from jarbas_hive_mind.utils import get_ip
+from jarbas_hive_mind.discovery.zero import ZeroConfAnnounce
+import uuid
 import base64
 
 platform = "NodeRedMindV0.1"
@@ -26,6 +29,24 @@ class NodeRedMind(HiveMind):
     def __init__(self, debug=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.debug = debug
+        self.zero = None
+        self.upnp_server = None
+        self.ssdp = None
+
+    def start_announcing(self):
+        device_uuid = uuid.uuid4()
+        local_ip_address = get_ip()
+        hivemind_socket = self.listener.address.replace("0.0.0.0",
+                                                        local_ip_address)
+
+        if self.zero is None:
+            LOG.info("Registering zeroconf:HiveMind-NodeRed-websocket " +
+                     hivemind_socket)
+            self.zero = ZeroConfAnnounce(uuid=device_uuid,
+                                         port=self.port,
+                                         host=hivemind_socket)
+            self.zero.daemon = True
+            self.zero.start()
 
     # parsed protocol messages
     def nodered_send(self, message):
@@ -56,7 +77,6 @@ class NodeRedMind(HiveMind):
             if msg_type.startswith("node_red."):
                 data["context"]["source"] = client.peer
                 data["context"]["platform"] = platform
-                #data["context"]["destination"] = None  # broadcast
                 if msg_type == 'node_red.query':
                     msg_type = "recognizer_loop:utterance"
                     data["context"]["destination"] = "skills"
@@ -66,15 +86,26 @@ class NodeRedMind(HiveMind):
                     self.mycroft_send(msg_type, data["data"], data["context"])
                     self.mycroft_send("node_red.success", data["data"],
                                       data["context"])
+                elif msg_type in ['node_red.tts']:
+                    msg_type = "speak"
+                    data["context"]["destination"] = ["audio"]
+                    self.mycroft_send(msg_type, data["data"], data["context"])
+                    self.mycroft_send("node_red.success", data["data"],
+                                      data["context"])
                 elif msg_type == 'node_red.converse.activate':
+                    data["context"]["destination"] = None
                     self.mycroft_send(msg_type, data["data"], data["context"])
                 elif msg_type == 'node_red.converse.deactivate':
+                    data["context"]["destination"] = None
                     self.mycroft_send(msg_type, data["data"], data["context"])
                 elif msg_type == 'node_red.intent_failure':
+                    data["context"]["destination"] = None
                     self.mycroft_send(msg_type, data["data"], data["context"])
                 elif msg_type == 'node_red.pong':
+                    data["context"]["destination"] = None
                     self.mycroft_send(msg_type, data["data"], data["context"])
                 elif msg_type == 'node_red.listen':
+                    data["context"]["destination"] = ["audio"]
                     self.mycroft_send("mycroft.mic.listen", data["data"],
                                       data["context"])
             else:
