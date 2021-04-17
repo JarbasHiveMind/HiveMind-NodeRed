@@ -1,5 +1,7 @@
 # NodeRed Hivemind
 
+![logo](nodered.png)
+
 check the [Node Red Mycroft skill](https://github.com/JarbasAl/fallback-node-red) for details
 
 # Usage
