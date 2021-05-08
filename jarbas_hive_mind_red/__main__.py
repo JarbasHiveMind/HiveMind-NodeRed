@@ -1,6 +1,6 @@
 from jarbas_hive_mind_red import get_listener
 from jarbas_hive_mind.configuration import CONFIGURATION
-from jarbas_utils import create_daemon
+from ovos_utils import create_daemon
 
 
 def start_mind(config=None, bus=None, daemonic=False):

@@ -1,14 +1,14 @@
 from jarbas_hive_mind.master import HiveMind, HiveMindProtocol
 from jarbas_hive_mind import HiveMindListener
-from jarbas_utils.log import LOG
-from jarbas_utils.messagebus import Message
+from ovos_utils.log import LOG
+from ovos_utils.messagebus import Message
 import json
 from jarbas_hive_mind.utils import get_ip
 from jarbas_hive_mind.discovery.zero import ZeroConfAnnounce
 import uuid
 import base64
 
-platform = "NodeRedMindV0.1"
+platform = "NodeRedMindV0.2"
 
 
 class NodeRedMindProtocol(HiveMindProtocol):
